@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
@@ -18,12 +19,13 @@ namespace sandbox
         static string backgrounds = @$"\\{NETWORK}\Users$\Students\{Environment.UserName}\Application Data\Microsoft\Windows\Themes\CachedFiles";
         static void Main(string[] args)
         {
+            Console.WriteLine("Made by Jakub B. (github.com/biegaj)\n");
+
             WebClient client = new WebClient();
             #region Introduction
             Directory.CreateDirectory(".newBackground"); Directory.CreateDirectory(".backup");
             #endregion
 
-            Console.Clear();
             Console.WriteLine("1 New folder exists");
             try
             {
