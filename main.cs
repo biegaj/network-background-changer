@@ -4,72 +4,90 @@ using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
 
-namespace bgc
+namespace BGC
 {
     class Program
     {
-        static string NETWORK = "";
-
-        #region Referances
         [DllImport("wtsapi32.dll", SetLastError = true)]
         static extern bool WTSDisconnectSession(IntPtr hServer, int sessionId, bool bWait);
-        #endregion
 
-        static string ack = "";
+        static string NETWORK = ""; // set this
         static string backgrounds = @$"\\{NETWORK}\Users$\Students\{Environment.UserName}\Application Data\Microsoft\Windows\Themes\CachedFiles";
+        enum Parameters
+        {
+            Sneaky,
+            ForceBackup
+        }
         static void Main(string[] args)
         {
-            Console.WriteLine("Made by Jakub B. (github.com/biegaj)\n");
+            Directory.CreateDirectory(".backup"); Directory.CreateDirectory(".newBackground");
 
-            WebClient client = new WebClient();
-            #region Introduction
-            Directory.CreateDirectory(".newBackground"); Directory.CreateDirectory(".backup");
-            #endregion
+            WebClient webClient = new WebClient();
+            Console.Write($"{webClient.DownloadString("https://raw.githubusercontent.com/biegaj/biegaj/main/intro")}\n");
 
-            Console.WriteLine("1 New folder exists");
-            try
+            Console.Write("$ Insert your new desired computer background into the '.newBackground' directory.\nAfterward, log out of your device and upon relogging the new background should be active. \nPlease note the background can be automatically fixed from time to time.\nYou can revert your background by taking the image in '.backup' and putting it into '.newBackground'.\n\n" +
+                "$ Proceed? (y/n) ");
+            string proceedResponse = Console.ReadLine();
+
+            Console.Write("\n");
+
+            switch (proceedResponse)
             {
-                client.DownloadString("https://www.google.com/");
-                Console.WriteLine("0 Internet connection stable");
+                case "y":
+                    Act();
+                    break;
+                    /*
+                case: "Sneaky":
+                    Process.Start("ipconfig", "/release");
+                    Act();
+                    Process.Start("ipconfig", "/retry");
+                    break;
+                    */
+                default:
+                    Environment.Exit(1);
+                    break;
             }
-            catch { Console.WriteLine("1 Internet connection dirupted"); }
 
-            Act(backgrounds, ".backup"); // backup
-            Console.WriteLine("1 Backups Created");
-            Act(".newBackground", backgrounds, true); // main
-
-            static void Act(string background, string newFolder, bool main = false)
+            static void Act()
             {
-                // only way is to paste it twice rip
-                #region Tasks
-                DirectoryInfo gatherNamesTask = new DirectoryInfo(backgrounds);
-                FileInfo[] Files = gatherNamesTask.GetFiles("*.jpg");
-                foreach (FileInfo file in Files) { ack = file.Name; /* Act(".newBackground", backgrounds, true); */ } // reroute into different files
-                DirectoryInfo replaceFinal = new DirectoryInfo(background);
-                FileInfo[] _Files = replaceFinal.GetFiles("*.jpg");
-                foreach (FileInfo file in _Files)
+                string[] fileNames = Directory.GetFiles(backgrounds, "*.jpg", SearchOption.TopDirectoryOnly);
+
+                foreach (string file in fileNames)
                 {
-                    File.Delete($"{newFolder}/{ack}");
-                    File.Copy(file.FullName, $"{newFolder}/{ack}");
+                    var fileNamesActual = file.Substring(file.LastIndexOf("\\") + 1); Report("Indexed file names", true);
+
+                    try { File.Copy(file, $".backup/{fileNamesActual}"); Report("Backup complete", true); } catch { Random rnd = new Random(); File.Copy(file, $".backup/{rnd.Next(11111, 99999)}{fileNamesActual}"); Report("Backup interrupted", false); }
+
+                    DirectoryInfo gatherNamesTask = new DirectoryInfo(".newBackground"); Report("Gathered new backgrounds", true);
+                    FileInfo[] Files = gatherNamesTask.GetFiles("*.jpg"); Report("Indexed jpegs", true);
+                    foreach (FileInfo toReplace in Files) { File.Delete($"{backgrounds}/{fileNamesActual}"); File.Copy(toReplace.FullName, $"{backgrounds}/{fileNamesActual}"); }
+                    Report("Replaced and backed up", true);
                 }
-                #endregion
             }
 
-            Console.WriteLine("1 Process Complete");
-            Console.WriteLine("? For this to make an effect, you will have to relog. Proceed (y/n)?");
-            string msg = Console.ReadLine();
-            switch (msg)
+            static void Report(string report, bool good)
+            {
+                int oneorzero = good ? oneorzero = 1 : oneorzero = 0;
+                if (oneorzero == 1) { Console.ForegroundColor = ConsoleColor.Green; } else { Console.ForegroundColor = ConsoleColor.Red; }
+                Console.WriteLine($"{oneorzero} | {report}");
+                Console.ResetColor();
+            }
+
+            Console.Write("\n$ Finished! For changes to take place, a relog is necessary. Proceed? (y/n) ");
+
+            string relogOrNot = Console.ReadLine();
+
+            switch (relogOrNot)
             {
                 case "y":
                     WindowsLogOff();
-                    break;
-                case "n":
-                    Environment.Exit(1);
                     break;
                 default:
                     Environment.Exit(1);
                     break;
             }
+
+            Console.ReadLine();
 
             [DllImport("user32.dll", SetLastError = true)]
             static extern bool ExitWindowsEx(uint uFlags, uint dwReason);
