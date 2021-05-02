@@ -8,6 +8,12 @@ namespace BGC
 {
     class Program
     {
+        /*
+          <PropertyGroup>
+	        <LangVersion>preview</LangVersion>
+          </PropertyGroup>
+        */
+
         [DllImport("wtsapi32.dll", SetLastError = true)]
         static extern bool WTSDisconnectSession(IntPtr hServer, int sessionId, bool bWait);
 
